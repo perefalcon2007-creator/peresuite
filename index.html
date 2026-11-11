@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>APEX Tactical Studio // Phase 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- TOP HEADER BAR -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-badge">APEX</span>
+        <div>
+          <h1>TACTICAL STUDIO</h1>
+          <p class="subtitle">SPATIAL PHYSICS &amp; BROADCAST TELESTRATOR</p>
+        </div>
+      </div>
+
+      <div class="mode-switch">
+        <button id="btnMode2D" class="mode-btn active" title="Interactive 2D Tactical Pitch">2D Tactical Lab</button>
+        <button id="btnModeTV" class="mode-btn" title="Upload Screenshot & Draw in 3D Perspective">TV Broadcast Mode</button>
+      </div>
+
+      <div class="top-actions">
+        <label class="upload-btn" for="bgUpload" title="Load Match Screenshot for TV Telestration">
+          <span>+ Load Match Frame</span>
+          <input type="file" id="bgUpload" accept="image/*" hidden />
+        </label>
+        <button id="btnExportPNG" class="primary-btn">Export HD PNG</button>
+      </div>
+    </header>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="workspace">
+      <!-- LEFT TOOLBAR: TELESTRATION & DRAWING -->
+      <aside class="panel left-panel">
+        <div class="panel-section">
+          <h3>TELESTRATION DECK</h3>
+          <div class="tool-grid">
+            <button class="tool-btn active" data-tool="select">Move / Select</button>
+            <button class="tool-btn" data-tool="spotlight">Spotlight Ring</button>
+            <button class="tool-btn" data-tool="cone">Vision Cone</button>
+            <button class="tool-btn" data-tool="offside">Offside Line</button>
+            <button class="tool-btn" data-tool="arrow">Ground Pass</button>
+            <button class="tool-btn" data-tool="lofted">Lofted Arc</button>
+            <button class="tool-btn" data-tool="carry">Ball Carry</button>
+            <button class="tool-btn" data-tool="chain">Chain Link</button>
+            <button class="tool-btn" data-tool="zone">Zone Box</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>GRAPHIC COLOR</h3>
+          <div class="color-row">
+            <button class="swatch active" data-color="#00f5d4" style="background:#00f5d4" title="Cyan"></button>
+            <button class="swatch" data-color="#fee440" style="background:#fee440" title="Gold"></button>
+            <button class="swatch" data-color="#ff2a6d" style="background:#ff2a6d" title="Crimson"></button>
+            <button class="swatch" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+            <button class="swatch" data-color="#a855f7" style="background:#a855f7" title="Violet"></button>
+          </div>
+        </div>
+
+        <div class="panel-section" id="calibrationBox">
+          <h3>3D PERSPECTIVE LOCK</h3>
+          <p class="hint">In TV Mode, click 4 corners of a pitch box (Top-Left, Top-Right, Bottom-Right, Bottom-Left) to warp graphics flat onto the grass.</p>
+          <div class="btn-row">
+            <button id="btnCalibrate" class="secondary-btn">Calibrate 4 Corners</button>
+            <button id="btnResetCalib" class="ghost-btn">Reset</button>
+          </div>
+          <div id="calibStatus" class="status-pill">Status: Flat / Uncalibrated</div>
+        </div>
+
+        <div class="panel-section">
+          <h3>CANVAS ACTIONS</h3>
+          <div class="btn-row">
+            <button id="btnUndo" class="secondary-btn">Undo Graphic</button>
+            <button id="btnClearDrawings" class="danger-btn">Clear Graphics</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER CANVAS STAGE -->
+      <section class="stage-container">
+        <div id="bannerPrompt" class="stage-banner hidden"></div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="tacticalCanvas"></canvas>
+        </div>
+
+        <!-- LIVE COMPACTNESS TELEMETRY BAR -->
+        <div class="telemetry-bar">
+          <div class="telemetry-card home-card">
+            <span class="dot home-dot"></span>
+            <strong id="homeLabel">HOME</strong>
+            <span>Width: <b id="homeWidth">--</b>m</span>
+            <span>Depth: <b id="homeDepth">--</b>m</span>
+            <span>Area: <b id="homeArea">--</b>m²</span>
+          </div>
+          <div class="telemetry-card away-card">
+            <span class="dot away-dot"></span>
+            <strong id="awayLabel">AWAY</strong>
+            <span>Width: <b id="awayWidth">--</b>m</span>
+            <span>Depth: <b id="awayDepth">--</b>m</span>
+            <span>Area: <b id="awayArea">--</b>m²</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT INSPECTOR: SPATIAL PHYSICS & TEAMS -->
+      <aside class="panel right-panel">
+        <div class="panel-section">
+          <h3>SPATIAL PHYSICS ENGINE</h3>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkVoronoi" />
+            <span>Live Voronoi Territory Control</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkHull" checked />
+            <span>Team Convex Hull (Compactness)</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h3>PITCH GEOMETRY OVERLAYS</h3>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkLanes" />
+            <span>5 Vertical Corridors</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkHalfSpaces" />
+            <span>Golden Half-Spaces + Crowd Alert</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkThirds" />
+            <span>Horizontal Thirds</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkZones18" />
+            <span>18-Zone Positional Grid</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h3>PLAYER DISPLAY</h3>
+          <div class="segmented">
+            <button class="seg-btn active" data-display="number">Numbers</button>
+            <button class="seg-btn" data-display="role">Roles</button>
+          </div>
+          <label class="toggle-item" style="margin-top:8px;">
+            <input type="checkbox" id="chkShowAway" checked />
+            <span>Show Opponent XI</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h3>HOME SQUAD</h3>
+          <div class="team-row">
+            <input type="text" id="homeNameInput" value="HOME" maxlength="10" />
+            <input type="color" id="homeColorInput" value="#2563eb" />
+          </div>
+          <select id="homeFormation">
+            <option value="4-3-3" selected>4-3-3 Attacking</option>
+            <option value="3-2-5">3-2-5 In-Possession</option>
+            <option value="4-2-3-1">4-2-3-1 Double Pivot</option>
+            <option value="4-4-2">4-4-2 Mid Block</option>
+            <option value="3-5-2">3-5-2 Wingbacks</option>
+          </select>
+        </div>
+
+        <div class="panel-section">
+          <h3>AWAY SQUAD</h3>
+          <div class="team-row">
+            <input type="text" id="awayNameInput" value="AWAY" maxlength="10" />
+            <input type="color" id="awayColorInput" value="#ef4444" />
+          </div>
+          <select id="awayFormation">
+            <option value="4-4-2" selected>4-4-2 Compact Block</option>
+            <option value="4-3-3">4-3-3 High Press</option>
+            <option value="4-2-3-1">4-2-3-1 Balanced</option>
+            <option value="5-4-1">5-4-1 Low Block</option>
+            <option value="3-5-2">3-5-2 Counter</option>
+          </select>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="engine.js"></script>
+</body>
+</html>
