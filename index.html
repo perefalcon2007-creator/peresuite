@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>APEX Tactical Studio // Broadcast &amp; Spatial Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- TOP HEADER BAR -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-badge">APEX</span>
+        <div>
+          <h1>TACTICAL STUDIO</h1>
+          <p class="subtitle">SPATIAL PHYSICS &amp; BROADCAST TELESTRATOR</p>
+        </div>
+      </div>
+
+      <div class="mode-switch">
+        <button id="btnMode2D" class="mode-btn active">2D Tactical Lab</button>
+        <button id="btnModeTV" class="mode-btn">TV Video &amp; Frame Mode</button>
+      </div>
+
+      <div class="top-actions">
+        <label class="upload-btn" for="mediaUpload" title="Load Match Video (.mp4/.webm) or Image">
+          <span>+ Load Video / Frame</span>
+          <input type="file" id="mediaUpload" accept="image/*,video/*" hidden />
+        </label>
+        <button id="btnExportPNG" class="primary-btn">Export HD PNG</button>
+      </div>
+    </header>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="workspace">
+      <!-- LEFT TOOLBAR: TELESTRATION & PROPS -->
+      <aside class="panel left-panel">
+        <div class="panel-section">
+          <h3>TELESTRATION &amp; PROPS</h3>
+          <div class="tool-grid">
+            <button class="tool-btn active" data-tool="select">Move / Select</button>
+            <button class="tool-btn" data-tool="goalpost">Place Goalpost</button>
+            <button class="tool-btn" data-tool="spotlight">Spotlight Ring</button>
+            <button class="tool-btn" data-tool="trap">Press Trap</button>
+            <button class="tool-btn" data-tool="cone">Vision Cone</button>
+            <button class="tool-btn" data-tool="offside">Offside Line</button>
+            <button class="tool-btn" data-tool="arrow">Ground Pass</button>
+            <button class="tool-btn" data-tool="lofted">Lofted Arc</button>
+            <button class="tool-btn" data-tool="carry">Ball Carry FX</button>
+            <button class="tool-btn" data-tool="curve">Curved Run</button>
+            <button class="tool-btn" data-tool="onetwo">1-2 Wall Pass</button>
+            <button class="tool-btn" data-tool="chain">Chain Link</button>
+            <button class="tool-btn" data-tool="shield">Shield Wall</button>
+            <button class="tool-btn" data-tool="zone">Zone Box</button>
+            <button class="tool-btn span-2" data-tool="text">+ Tactical Text Callout</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>GRAPHIC COLOR</h3>
+          <div class="color-row">
+            <button class="swatch active" data-color="#00f5d4" style="background:#00f5d4" title="Broadcast Cyan"></button>
+            <button class="swatch" data-color="#fee440" style="background:#fee440" title="Solar Gold"></button>
+            <button class="swatch" data-color="#ff2a6d" style="background:#ff2a6d" title="Crimson Alert"></button>
+            <button class="swatch" data-color="#ffffff" style="background:#ffffff" title="Pure White"></button>
+            <button class="swatch" data-color="#09090b" style="background:#09090b; border:1px solid #475569;" title="Carbon Black"></button>
+            <button class="swatch" data-color="#a855f7" style="background:#a855f7" title="Electric Violet"></button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>3D PERSPECTIVE LOCK (TV)</h3>
+          <p class="hint">In TV Mode, click 4 grass corners (Top-Left, Top-Right, Bottom-Right, Bottom-Left) to warp graphics flat onto the turf.</p>
+          <div class="btn-row">
+            <button id="btnCalibrate" class="secondary-btn">Calibrate 4 Corners</button>
+            <button id="btnResetCalib" class="ghost-btn">Reset</button>
+          </div>
+          <div id="calibStatus" class="status-pill">Status: Flat / Uncalibrated</div>
+        </div>
+
+        <div class="panel-section">
+          <h3>LAYER ACTIONS (ACTIVE MODE)</h3>
+          <div class="btn-row">
+            <button id="btnUndo" class="secondary-btn">Undo Last</button>
+            <button id="btnClearDrawings" class="danger-btn">Clear Layer</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER CANVAS STAGE -->
+      <section class="stage-container">
+        <div id="bannerPrompt" class="stage-banner hidden"></div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="tacticalCanvas"></canvas>
+        </div>
+
+        <!-- VIDEO SCRUBBER BAR (VISIBLE WHEN VIDEO LOADED) -->
+        <div id="videoControls" class="video-bar hidden">
+          <button id="btnPlayPause" class="primary-btn">Play</button>
+          <input type="range" id="videoScrubber" min="0" max="100" step="0.05" value="0" />
+          <span id="videoTime" class="mono-time">00:00 / 00:00</span>
+        </div>
+
+        <!-- LIVE COMPACTNESS TELEMETRY BAR -->
+        <div class="telemetry-bar">
+          <div class="telemetry-card home-card">
+            <span class="dot home-dot"></span>
+            <strong id="homeLabel">HOME</strong>
+            <span>Width: <b id="homeWidth">--</b>m</span>
+            <span>Depth: <b id="homeDepth">--</b>m</span>
+            <span>Area: <b id="homeArea">--</b>m²</span>
+          </div>
+          <div class="telemetry-card away-card">
+            <span class="dot away-dot"></span>
+            <strong id="awayLabel">AWAY</strong>
+            <span>Width: <b id="awayWidth">--</b>m</span>
+            <span>Depth: <b id="awayDepth">--</b>m</span>
+            <span>Area: <b id="awayArea">--</b>m²</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT INSPECTOR: TURF, PHYSICS & SQUADS -->
+      <aside class="panel right-panel">
+        <div class="panel-section">
+          <h3>STADIUM TURF MOW PATTERN</h3>
+          <select id="turfPattern">
+            <option value="vertical" selected>Classic Vertical Stripes</option>
+            <option value="horizontal">Horizontal Broadcast Bands</option>
+            <option value="checkered">Checkered Square Grid</option>
+            <option value="circles">Concentric Stadium Circles</option>
+            <option value="stealth">Stealth Dark Carbon Pitch</option>
+          </select>
+        </div>
+
+        <div class="panel-section">
+          <h3>SPATIAL PHYSICS ENGINE</h3>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkVoronoi" />
+            <span>Live Voronoi Territory Control</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkHull" checked />
+            <span>Team Convex Hull (Compactness)</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h3>PITCH GEOMETRY OVERLAYS</h3>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkLanes" />
+            <span>5 Vertical Corridors</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkHalfSpaces" />
+            <span>Golden Half-Spaces + Crowd Alert</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkThirds" />
+            <span>Horizontal Thirds</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="chkZones18" />
+            <span>18-Zone Positional Grid</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h3>PLAYER DISPLAY</h3>
+          <div class="segmented">
+            <button class="seg-btn active" data-display="number">Numbers</button>
+            <button class="seg-btn" data-display="role">Roles</button>
+          </div>
+          <label class="toggle-item" style="margin-top:8px;">
+            <input type="checkbox" id="chkShowAway" checked />
+            <span>Show Opponent XI</span>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h3>HOME SQUAD &amp; KIT</h3>
+          <div class="team-row">
+            <input type="text" id="homeNameInput" value="HOME" maxlength="10" />
+            <input type="color" id="homeColorInput" value="#ffffff" title="Custom Kit Color" />
+          </div>
+          <div class="kit-presets" data-target="home">
+            <button class="kit-chip" data-kit="#ffffff" style="background:#ffffff" title="Pure White"></button>
+            <button class="kit-chip" data-kit="#09090b" style="background:#09090b" title="Pure Black"></button>
+            <button class="kit-chip" data-kit="#2563eb" style="background:#2563eb" title="Royal Blue"></button>
+            <button class="kit-chip" data-kit="#dc2626" style="background:#dc2626" title="Crimson Red"></button>
+            <button class="kit-chip" data-kit="#facc15" style="background:#facc15" title="Canary Yellow"></button>
+          </div>
+          <select id="homeFormation">
+            <option value="4-3-3" selected>4-3-3 Attacking</option>
+            <option value="3-2-5">3-2-5 In-Possession</option>
+            <option value="4-2-3-1">4-2-3-1 Double Pivot</option>
+            <option value="4-4-2">4-4-2 Flat</option>
+            <option value="4-4-2-diamond">4-4-2 Diamond</option>
+            <option value="3-5-2">3-5-2 Wingbacks</option>
+            <option value="3-4-3">3-4-3 Box Midfield</option>
+            <option value="4-1-4-1">4-1-4-1 Single Pivot</option>
+            <option value="4-2-2-2">4-2-2-2 Narrow</option>
+            <option value="3-1-4-2">3-1-4-2 Aggressive</option>
+            <option value="5-3-2">5-3-2 Compact</option>
+            <option value="5-4-1">5-4-1 Low Block</option>
+          </select>
+        </div>
+
+        <div class="panel-section">
+          <h3>AWAY SQUAD &amp; KIT</h3>
+          <div class="team-row">
+            <input type="text" id="awayNameInput" value="AWAY" maxlength="10" />
+            <input type="color" id="awayColorInput" value="#09090b" title="Custom Kit Color" />
+          </div>
+          <div class="kit-presets" data-target="away">
+            <button class="kit-chip" data-kit="#ffffff" style="background:#ffffff" title="Pure White"></button>
+            <button class="kit-chip" data-kit="#09090b" style="background:#09090b" title="Pure Black"></button>
+            <button class="kit-chip" data-kit="#2563eb" style="background:#2563eb" title="Royal Blue"></button>
+            <button class="kit-chip" data-kit="#dc2626" style="background:#dc2626" title="Crimson Red"></button>
+            <button class="kit-chip" data-kit="#10b981" style="background:#10b981" title="Emerald Green"></button>
+          </div>
+          <select id="awayFormation">
+            <option value="4-4-2" selected>4-4-2 Compact Block</option>
+            <option value="4-3-3">4-3-3 High Press</option>
+            <option value="4-2-3-1">4-2-3-1 Balanced</option>
+            <option value="4-4-2-diamond">4-4-2 Diamond</option>
+            <option value="3-5-2">3-5-2 Counter</option>
+            <option value="3-4-3">3-4-3 High Block</option>
+            <option value="4-1-4-1">4-1-4-1 Mid Block</option>
+            <option value="4-2-2-2">4-2-2-2 Press</option>
+            <option value="3-2-5">3-2-5 Build-Up</option>
+            <option value="3-1-4-2">3-1-4-2 Direct</option>
+            <option value="5-3-2">5-3-2 Counter</option>
+            <option value="5-4-1">5-4-1 Low Block</option>
+          </select>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- =========================================================
+       APEX PHASE 2-5 UNIVERSAL DOCK & SCRIPT HOOKS
+       ========================================================= -->
+  <section id="cinemaTimelineDock" class="cinema-dock">
+    <div class="cinema-controls">
+      <button id="btnAddKeyframe" class="cinema-btn accent">+ Record Frame</button>
+      <button id="btnUpdateKeyframe" class="cinema-btn">Update Frame</button>
+      <button id="btnDeleteKeyframe" class="cinema-btn danger">Delete</button>
+      <div class="cinema-divider"></div>
+      <button id="btnPlaySequence" class="cinema-btn play">▶ Play Sequence</button>
+      <label class="cinema-toggle"><input type="checkbox" id="chkLoopSequence" /> Loop</label>
+      <div class="cinema-speed">
+        <span>Speed:</span>
+        <select id="frameDurationSelect">
+          <option value="800">0.8s (Fast)</option>
+          <option value="1400" selected>1.4s (Broadcast)</option>
+          <option value="2200">2.2s (Slow-Mo)</option>
+        </select>
+      </div>
+      <div class="cinema-divider"></div>
+      <button id="btnToggleTagger" class="cinema-btn">🎬 Match Tagger</button>
+      <button id="btnToggleAnalytics" class="cinema-btn">📊 Data &amp; xG</button>
+      <button id="btnToggleDossier" class="cinema-btn">📁 Club Dossier</button>
+      <button id="btnExportVideo" class="cinema-btn export">● Export Video (.webm)</button>
+    </div>
+    <div id="keyframeStrip" class="keyframe-strip">
+      <span class="empty-timeline-hint">Position players on the pitch and click "+ Record Frame" to start your sequence.</span>
+    </div>
+  </section>
+
+  <!-- COLLAPSIBLE DRAWERS / MODALS FOR PHASES 3, 4 & 5 -->
+  <aside id="taggerDrawer" class="apex-drawer hidden">
+    <div class="drawer-header">
+      <h3>🎬 Phase 3: Match Video &amp; Event Tagger</h3>
+      <button class="close-drawer" data-close="taggerDrawer">✕</button>
+    </div>
+    <div id="taggerMountPoint" class="module-mount"></div>
+  </aside>
+
+  <div id="analyticsModal" class="apex-modal hidden">
+    <div class="modal-card">
+      <div class="drawer-header">
+        <h3>📊 Phase 4: Scouting &amp; Data Core</h3>
+        <button class="close-drawer" data-close="analyticsModal">✕</button>
+      </div>
+      <div id="analyticsMountPoint" class="module-mount"></div>
+    </div>
+  </div>
+
+  <div id="dossierModal" class="apex-modal hidden">
+    <div class="modal-card">
+      <div class="drawer-header">
+        <h3>📁 Phase 5: Club Dossier &amp; Portfolio</h3>
+        <button class="close-drawer" data-close="dossierModal">✕</button>
+      </div>
+      <div id="dossierMountPoint" class="module-mount"></div>
+    </div>
+  </div>
+
+  <script src="engine.js"></script>
+
+  <!-- MODULAR PHASE SCRIPTS (LOAD AFTER YOUR ORIGINAL engine.js) -->
+  <script src="animator.js"></script>
+  <script src="tagger.js" defer></script>
+  <script src="analytics.js" defer></script>
+  <script src="portfolio.js" defer></script>
+</body>
+</html>
